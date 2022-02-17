@@ -1,0 +1,19 @@
+{
+  "template": "https://github.com/escaped/cookiecutter-jupyter.git",
+  "commit": "33941560f36f1f657edecfcae3ca76d371550909",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "author": "Daniel Hoffmann",
+      "author_email": "daniel.hoffmann41@gmail.com",
+      "github_username": "fransaci",
+      "project_name": "emmy-case-study",
+      "project_slug": "emmy_case_study",
+      "short_description": "Python Data Science Boilerplate",
+      "version": "0.1.0",
+      "line_length": "88",
+      "_template": "https://github.com/escaped/cookiecutter-jupyter.git"
+    }
+  },
+  "directory": null
+}
