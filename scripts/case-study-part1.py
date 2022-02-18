@@ -118,7 +118,7 @@ df_events[df_events['battery_pct'] > 100]
 df_events = df_events[df_events['battery_pct'] <= 100]
 
 # %% [markdown]
-# Last but not least we check for faulty geolocations. We already verified the nonexistence of null values.
+# Now I'd like to check for faulty geolocations. We already verified the nonexistence of null values. So looking for min-max-values should suffice.
 
 # %%
 print(
@@ -131,5 +131,8 @@ print(
 
 # %% [markdown]
 # A quick sanity check suffices to see that the geolocation ranges between Stuttgart, Berlin and Vienna. So we have an expected range of geo data, which indicates no necessity of cleaning the data in that regard. Sadly none of our observed vehicles has a vacation on an tropical island :)
+#
+
+# %% [markdown]
 #
 # ## Data Analysis
