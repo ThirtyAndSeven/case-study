@@ -16,7 +16,7 @@ def create_dict_from_json_like_string(json_like_string: str) -> dict:
 def find_specific_value_from_nested_dicts(
     comments_dict: dict, key_to_find: str, value=None
 ):
-    """Searches for an value for a specific key within a potential nested dict.
+    """Searches for a value for a specific key within a potential nested dict.
 
     Args:
         comments_dict (dict): The dict which will be searched.
