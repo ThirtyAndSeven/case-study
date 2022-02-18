@@ -97,7 +97,7 @@ print(
 # Well, at least we don't have any values below 0% but 255 battery percentage seems unusual. It could be a status code, but I want to look for more examples.
 
 # %%
-df_events[df_events["battery_pct"] > 100]
+df_events[df_events['battery_pct'] > 100]
 
 # %% [markdown]
 # I will remove those columns for the sake of this case study. Usually I would ask around if there is any hidden meaning behind this specific value. Interestingly enough, we can find a lot of reservations and ride starts for the respective vehicle_id. So at least I can conclude that these specific vehicles are still operational, but this could lead to problems from an operational standpoint. Costumers could book unoperational vehicles, which could lead to a less then perfect customer experience. Lets join both tables together and see if its a vehicle-specific problem.
@@ -109,13 +109,13 @@ df_events = df_events.join(df_cars.set_index('vehicle_id'), how='left', on='vehi
 # Lets check for unsual battery percentages with regard to the vehicle type.
 
 # %%
-df_events[df_events["battery_pct"] > 100]
+df_events[df_events['battery_pct'] > 100]
 
 # %% [markdown]
 # We can already see two different vehicle_types. Usually I would ask around if there is any technical meaning behind this number. I will delete the specific rows for the sake of this case study.
 
 # %%
-df_events = df_events[df_events["battery_pct"] <= 100]
+df_events = df_events[df_events['battery_pct'] <= 100]
 
 # %% [markdown]
 # Last but not least we check for faulty geolocations. We already verified the nonexistence of null values.
