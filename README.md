@@ -3,7 +3,7 @@
 
 ## Requirements
 
-* Python 3.6.2 or newer
+* Python 3.8 or newer
 
 ## Development
 
