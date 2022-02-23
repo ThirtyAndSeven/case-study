@@ -17,12 +17,12 @@
 # # EMMY CASE STUDY
 
 # %%
+import datetime
 import json
 import pathlib
 
 import numpy as np
 import pandas as pd
-
 
 from emmy_case_study import utils
 
@@ -99,6 +99,7 @@ df_events["year"] = df_events["event_time"].dt.year
 df_events["month"] = df_events["event_time"].dt.month
 df_events["day"] = df_events["event_time"].dt.day
 df_events["hour"] = df_events["event_time"].dt.hour
+df_events["weekday"] = df_events["event_time"].apply(datetime.datetime.weekday)
 
 # %% [markdown]
 # ### Checking for unusual battery values
@@ -168,18 +169,62 @@ df_events["driven_distance"] = df_events["comment"].apply(
 
 # %% [markdown]
 # ## Basic KPIs
-#
+# At first I want to get a measurement in performance behaviour and its distribution. Also, I want to know if we can beat a trailing average, but my data only spans over two months. Because of the seasonal nature of Emmy's business, I would consider comparing the usage performance from past years. In this case I just measured the mean from my available data.
 
 # %%
-for event_type in unique_events:
-    pd.pivot_table(
+for event_type in ("reservation_creation", "ride_start", "reservation_cancelation"):
+    df_count_pivot_table = pd.pivot_table(
         df_events[["event", "year", "month", "day"]].where(
             df_events["event"] == f'{event_type}'
         ),
         columns=["event"],
         index=["year", "month", "day"],
         aggfunc=np.count_nonzero,
-    ).plot()
+    )
+    df_daily_mean_pivot_table = df_count_pivot_table[event_type].mean()
+    df_count_pivot_table.plot(
+        xlabel="number of events", kind="hist", bins=20, figsize=(16, 9), grid=True
+    )
+    df_count_pivot_table["mean"] = df_daily_mean_pivot_table
+    df_count_pivot_table.plot(figsize=(16, 9), grid=True)
+
+
+# %% [markdown]
+# Can we create value from this? Probably not, but at least we can understand our business a little bit better. The Usage seems to be steady around the the daily mean. The daily reservations fluctuate steadily at around alightly above 18000 reservations a day and doesnt seem to move much above 20000 or underneath 16000 reservations. The actual usage of our scooters seems to move about around 12500 rides a day, staying in a range of 10000 to 14000 per day and peaking at 16000 per day.
+#
+# Also, we may see a usage pattern in regards to the weekdays. I was already told about the dynamic prices project and the weekdays with their respective usage may seem like an obvious choice as part of a model.
+
+# %%
+df_weekday_count_pivot_table = (
+    pd.pivot_table(
+        df_events[["event", "year", "month", "day", "weekday"]].where(
+            df_events["event"] == "ride_start"
+        ),
+        columns=["event"],
+        index=["year", "month", "day", "weekday"],
+        aggfunc=np.count_nonzero,
+    )
+    .groupby("weekday")
+    .mean()
+    .plot.bar(figsize=(16, 9), grid=True, title="Mean scooter rides per weekday")
+)
+
+# %% [markdown]
+# ## Churn Rates
+# In an ideal world we want to catch our customers from the beginning of their journey until they are safe and sound at their friends and families, at work or wherever our costumers choose to go. So lets disect the churn rate of our costumer behaviour.
+
+# %%
+df_churn_count_pivot_table = pd.DataFrame()
+for event_type in ("reservation_creation", "ride_start", "reservation_cancelation"):
+    df_churn_count_pivot_table[event_type] = pd.pivot_table(
+        df_events[["event", "year", "month", "day"]].where(
+            df_events["event"] == f'{event_type}'
+        ),
+        columns=["event"],
+        index=["year", "month", "day"],
+        aggfunc=np.count_nonzero,
+    )
+df_churn_count_pivot_table.plot.box(figsize=(16, 9), grid=True, title="")
 
 # %%
 df_pivot = pd.pivot_table(
