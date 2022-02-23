@@ -1,12 +1,5 @@
 # emmy-case-study
 
-![PyPI](https://img.shields.io/pypi/v/emmy-case-study?style=flat-square)
-![GitHub Workflow Status (master)](https://img.shields.io/github/workflow/status/fransaci/emmy-case-study/Test%20&%20Lint/master?style=flat-square)
-![Coveralls github branch](https://img.shields.io/coveralls/github/fransaci/emmy-case-study/master?style=flat-square)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/emmy-case-study?style=flat-square)
-![PyPI - License](https://img.shields.io/pypi/l/emmy-case-study?style=flat-square)
-
-Python Data Science Boilerplate
 
 ## Requirements
 
@@ -26,6 +19,10 @@ To enable `better-exceptions` you have to run `export BETTER_EXCEPTIONS=1` in yo
 ### Install
 
 Clone this repository and run
+
+```bash
+pip install poetry
+```
 
 ```bash
 poetry install
