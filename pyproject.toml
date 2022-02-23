@@ -36,6 +36,8 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.8, <4.0"
 pandas = "^1.4.1"
+matplotlib = "^3.5.1"
+altair = "^4.2.0"
 
 [tool.poetry.dev-dependencies]
 autoflake = "^1.4"
