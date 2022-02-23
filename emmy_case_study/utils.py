@@ -20,4 +20,4 @@ def find_value_in_nested_dicts(
             elif key == key_to_find:
                 data = val
                 break
-        return data
+    return data if data else None
