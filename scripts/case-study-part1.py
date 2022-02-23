@@ -17,8 +17,14 @@
 # # EMMY CASE STUDY
 
 # %%
-import pandas as pd
+import json
 import pathlib
+
+import numpy as np
+import pandas as pd
+
+
+from emmy_case_study import utils
 
 # %% [markdown]
 # Import data and create respective dataframes
@@ -52,7 +58,8 @@ df_cars.head(30)
 df_cars['vehicle_type'].unique()
 
 # %%
-df_events['event'].unique()
+unique_events = df_events['event'].unique()
+print(unique_events)
 
 # %% [markdown]
 # And of course there was one event hiding. Event cancelation are very important metrics which I will explore furthermore in a later part.
@@ -82,6 +89,16 @@ print(
     f"Min and max vehicle_id in the events table: {df_events['vehicle_id'].min()}, {df_events['vehicle_id'].max()}"
 )
 
+
+# %% [markdown]
+# ## Cast event times to datetimes
+
+# %%
+df_events["event_time"] = pd.to_datetime(df_events["event_time"])
+df_events["year"] = df_events["event_time"].dt.year
+df_events["month"] = df_events["event_time"].dt.month
+df_events["day"] = df_events["event_time"].dt.day
+df_events["hour"] = df_events["event_time"].dt.hour
 
 # %% [markdown]
 # ### Checking for unusual battery values
@@ -132,7 +149,42 @@ print(
 # %% [markdown]
 # A quick sanity check suffices to see that the geolocation ranges between Stuttgart, Berlin and Vienna. So we have an expected range of geo data, which indicates no necessity of cleaning the data in that regard. Sadly none of our observed vehicles has a vacation on an tropical island :)
 #
+# Last but not least I will extract the driven_distance value from the comment column and will add another column with the sole integer value. This will enable future comparisons such as expected battery consumption based on location and the driven distance.
+
+# %%
+df_events["comment"] = df_events["comment"].fillna("{}")
+df_events["comment"] = df_events["comment"].apply(json.loads)
+
+# %%
+
+
+df_events["driven_distance"] = df_events["comment"].apply(
+    lambda x: utils.find_value_in_nested_dicts(x, "driven_distance")
+)
 
 # %% [markdown]
 #
 # ## Data Analysis
+
+# %% [markdown]
+# ## Basic KPIs
+#
+
+# %%
+for event_type in unique_events:
+    pd.pivot_table(
+        df_events[["event", "year", "month", "day"]].where(
+            df_events["event"] == f'{event_type}'
+        ),
+        columns=["event"],
+        index=["year", "month", "day"],
+        aggfunc=np.count_nonzero,
+    ).plot()
+
+# %%
+df_pivot = pd.pivot_table(
+    df_events,
+    values=["battery_pct", "driven_distance"],
+    index=["year", "month", "event"],
+    aggfunc=np.mean,
+)
