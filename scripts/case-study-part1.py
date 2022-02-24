@@ -17,12 +17,12 @@
 # # EMMY CASE STUDY
 
 # %%
+import datetime
 import json
 import pathlib
 
 import numpy as np
 import pandas as pd
-
 
 from emmy_case_study import utils
 
@@ -99,6 +99,7 @@ df_events["year"] = df_events["event_time"].dt.year
 df_events["month"] = df_events["event_time"].dt.month
 df_events["day"] = df_events["event_time"].dt.day
 df_events["hour"] = df_events["event_time"].dt.hour
+df_events["weekday"] = df_events["event_time"].apply(datetime.datetime.weekday)
 
 # %% [markdown]
 # ### Checking for unusual battery values
@@ -168,18 +169,164 @@ df_events["driven_distance"] = df_events["comment"].apply(
 
 # %% [markdown]
 # ## Basic KPIs
-#
+# At first I want to get a measurement in performance behaviour and its distribution. Also, I want to know if we can beat a trailing average, but my data only spans over two months. Because of the seasonal nature of Emmy's business, I would consider comparing the usage performance from past years. In this case I just measured the mean from my available data.
 
 # %%
-for event_type in unique_events:
-    pd.pivot_table(
+for event_type in ("reservation_creation", "ride_start", "reservation_cancelation"):
+    df_count_pivot_table = pd.pivot_table(
         df_events[["event", "year", "month", "day"]].where(
             df_events["event"] == f'{event_type}'
         ),
         columns=["event"],
         index=["year", "month", "day"],
         aggfunc=np.count_nonzero,
-    ).plot()
+    )
+    df_daily_mean_pivot_table = df_count_pivot_table[event_type].mean()
+    df_count_pivot_table.plot(
+        xlabel="number of events", kind="hist", bins=20, figsize=(16, 9), grid=True
+    )
+    df_count_pivot_table["mean"] = df_daily_mean_pivot_table
+    df_count_pivot_table.plot(figsize=(16, 9), grid=True)
+
+
+# %% [markdown]
+# Can we create value from this? Probably not, but at least we can understand our business a little bit better. The Usage seems to be steady around the the daily mean. The daily reservations fluctuate steadily at around alightly above 18000 reservations a day and doesnt seem to move much above 20000 or underneath 16000 reservations. The actual usage of our scooters seems to move about around 12500 rides a day, staying in a range of 10000 to 14000 per day and peaking at 16000 per day.
+#
+# Also, we may see a usage pattern in regards to the weekdays. I was already told about the dynamic prices project and the weekdays with their respective usage may seem like an obvious choice as part of a model. Daytime, location and fleet capacity at the respective location could also be model parameters. We could also incorporate some kind of recommender system to predict a destination or the battery usage from our user behaviour.
+
+# %%
+df_weekday_count_pivot_table = (
+    pd.pivot_table(
+        df_events[["event", "year", "month", "day", "weekday"]].where(
+            df_events["event"] == "ride_start"
+        ),
+        columns=["event"],
+        index=["year", "month", "day", "weekday"],
+        aggfunc=np.count_nonzero,
+    )
+    .groupby("weekday")
+    .mean()
+)
+
+plot_usage_by_weekday = df_weekday_count_pivot_table.plot.bar(
+    figsize=(16, 9), grid=True, title="Mean scooter rides per weekday"
+)
+plot_usage_by_weekday.axhline()
+
+# %% [markdown]
+# In this figure we can see the distribution of rides per weekday from 0 = monday to 6 = sunday. It is very surprising to see significant less usage on mondays. I would also expect to see most usage in the morning (e.g. commuting to work) or the evening. Emmy's service as an alternative to cab services would also lead to an increased usage in the evening (dober usage hopefully). Let's get a feeling for the mean hourly usage and compare them among the weekdays.
+
+# %%
+df_hourly_usage_count_pivot_table = (
+    pd.pivot_table(
+        df_events[["event", "year", "month", "day", "hour", "weekday"]],
+        columns=["event"],
+        index=["year", "month", "day", "hour", "weekday"],
+        aggfunc=np.count_nonzero,
+    )
+    .groupby(["weekday", "hour"])
+    .mean()
+)
+df_hourly_usage_count_pivot_table.plot(
+    figsize=(16, 9),
+    title="Mean scooter rides per hour on weekdays",
+    xticks=range(0, 168, 6),
+    rot=90,
+    grid=True,
+)
+
+# %% [markdown]
+# Now this figure is telling a story! We can learly see an increased usage in the morning and evening. Clearly customers use our service to commute to and from work. We can also see an increase friday and saturday night. So this data shows a pattern and should be very useful for dynamic pricing systems. It should also be very useful for operations, so we can manage when we should dispatch most of the maintenance crew. I will plot log scaled figure to compare "ride_end" events with maintenance events to get a better picture
+#
+# ## Operations
+
+# %%
+df_hourly_usage_count_pivot_table = (
+    pd.pivot_table(
+        df_events[["event", "year", "month", "day", "hour", "weekday"]].where(
+            np.logical_or(
+                df_events["event"] == "maintenance_start",
+                df_events["event"] == "ride_end",
+            )
+        ),
+        columns=["event"],
+        index=["year", "month", "day", "hour", "weekday"],
+        aggfunc=np.count_nonzero,
+    )
+    .groupby(["weekday", "hour"])
+    .mean()
+)
+df_hourly_usage_count_pivot_table.plot(
+    figsize=(16, 9),
+    title="Maintenance response on usage spike",
+    xticks=range(0, 168, 6),
+    ylabel="log scaled number of events",
+    logy=True,
+    rot=90,
+    grid=True,
+)
+
+# %%
+df_ride_start_to_end_merge = pd.merge(
+    df_events[df_events["event"] == "ride_start"],
+    df_events[df_events["event"] == "ride_end"],
+    on=["ride_id", "ride_id"],
+)
+df_ride_start_to_end_merge["battery_pct_used"] = (
+    df_ride_start_to_end_merge["battery_pct_x"]
+    - df_ride_start_to_end_merge["battery_pct_y"]
+)
+
+
+# %% [markdown]
+# It looks like there are some cases, which seem to indicate, that some customers might charge their scooter.
+
+# %%
+df_ride_start_to_end_merge[df_ride_start_to_end_merge["battery_pct_used"] < 0]
+
+# %%
+mu_battery_pct_used = df_ride_start_to_end_merge["battery_pct_used"].mean()
+sigma_battery_pct_used = np.sqrt(df_ride_start_to_end_merge["battery_pct_used"].var())
+risk_battery_pct_used = df_ride_start_to_end_merge["battery_pct_used"].quantile(q=0.95)
+
+plot_battery_delta = df_ride_start_to_end_merge["battery_pct_used"].plot.hist(
+    bins=100,
+    figsize=(16, 9),
+    title="Distribution of battery_pct used per ride",
+    xlabel="battery_pct used",
+)
+
+plot_text = (
+    f'mu = {round(mu_battery_pct_used, 2)}\n'
+    f'sigma = {round(sigma_battery_pct_used, 2)}\n'
+    f'95th percentile = {round(risk_battery_pct_used, 2)}'
+)
+plot_battery_delta.text(25, 30000, plot_text)
+
+plot_battery_delta.axvline(x=mu_battery_pct_used, color="black", label="mu")
+plot_battery_delta.axvline(
+    x=risk_battery_pct_used, color="red", linestyle="--", label="95th percentile"
+)
+
+plot_battery_delta.legend()
+
+# %% [markdown]
+# ## Churn Rates
+# In an ideal world we want to catch our customers from the beginning of their journey until they are safe and sound at their friends and families, at work or wherever our costumers choose to go. So lets disect the churn rate of our costumer behaviour.
+
+# %%
+df_churn_count_pivot_table = pd.DataFrame()
+for event_type in ("reservation_creation", "ride_start", "reservation_cancelation"):
+    df_churn_count_pivot_table[event_type] = pd.pivot_table(
+        df_events[["event", "year", "month", "day"]].where(
+            df_events["event"] == f'{event_type}'
+        ),
+        columns=["event"],
+        index=["year", "month", "day"],
+        aggfunc=np.count_nonzero,
+    )
+
+df_churn_count_pivot_table.plot.box(figsize=(16, 9), grid=True, title="")
 
 # %%
 df_pivot = pd.pivot_table(
