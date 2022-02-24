@@ -1,3 +1,3 @@
 # Contributors
 
-- [@fransaci](https://github.com/fransaci)
+- [@Daniel Hoffmann](https://github.com/ThirtyAndSeven)
