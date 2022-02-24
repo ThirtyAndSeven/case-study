@@ -206,8 +206,12 @@ df_weekday_count_pivot_table = (
     )
     .groupby("weekday")
     .mean()
-    .plot.bar(figsize=(16, 9), grid=True, title="Mean scooter rides per weekday")
 )
+
+plot_usage_by_weekday = df_weekday_count_pivot_table.plot.bar(
+    figsize=(16, 9), grid=True, title="Mean scooter rides per weekday"
+)
+plot_usage_by_weekday.axhline()
 
 # %% [markdown]
 # In this figure we can see the distribution of rides per weekday from 0 = monday to 6 = sunday. It is very surprising to see significant less usage on mondays. I would also expect to see most usage in the morning (e.g. commuting to work) or the evening. Emmy's service as an alternative to cab services would also lead to an increased usage in the evening (dober usage hopefully). Let's get a feeling for the mean hourly usage and compare them among the weekdays.
