@@ -297,9 +297,9 @@ plot_battery_delta = df_ride_start_to_end_merge["battery_pct_used"].plot.hist(
 )
 
 plot_text = (
-    f'mu = {round(mu_battery_pct_used, 2)}\n'
-    f'sigma = {round(sigma_battery_pct_used, 2)}\n'
-    f'95th percentile = {round(risk_battery_pct_used, 2)}'
+    f'mu = {round(mu_battery_pct_used, 2)}'
+    f'\nsigma = {round(sigma_battery_pct_used, 2)}'
+    f'\n95th percentile = {round(risk_battery_pct_used, 2)}'
 )
 plot_battery_delta.text(25, 30000, plot_text)
 
