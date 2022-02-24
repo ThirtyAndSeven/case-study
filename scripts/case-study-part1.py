@@ -21,6 +21,7 @@ import datetime
 import json
 import pathlib
 
+from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -34,6 +35,7 @@ current_path = pathlib.Path()
 project_path = current_path.absolute().parent
 data_path_for_cars = project_path / 'data/cars.csv'
 data_path_for_mobility_events = project_path / 'data/mobility_event_data.csv'
+data_path_for_map = project_path / '.map/map.png'
 
 
 # %%
@@ -184,7 +186,7 @@ for event_type in ("reservation_creation", "ride_start", "reservation_cancelatio
 
     mu_count_events = df_count_pivot_table[event_type].mean()
     sigma_count_events = np.sqrt(df_count_pivot_table[event_type].var())
-    risk_count_events = df_churn_count_pivot_table[event_type].quantile(q=0.05)
+    risk_count_events = df_count_pivot_table[event_type].quantile(q=0.05)
 
     plot_hist_count_events = df_count_pivot_table.plot.hist(
         xlabel="number of events", bins=20, figsize=(16, 9), grid=True
@@ -324,6 +326,50 @@ plot_battery_delta.axvline(
 )
 
 plot_battery_delta.legend()
+
+
+# %% [markdown]
+# Using this figure I can create a guideline system. I should probably also consider the vehicle type, but for now I will generalize a system with both vehicle types in mind. Assuming our custors won't charge their rented vehicle during their trip, we can assign a warning state for every vehicle using the mean battery usage and the 95th percentile of our data.
+
+# %%
+def apply_color(val: float, warning_limit: float, critical_limit: float) -> str:
+    if val <= warning_limit:
+        color = "yellow"
+    elif val <= critical_limit:
+        color = "red"
+    else:
+        color = "black"
+    return
+
+
+df_critical_batteries = df_events[
+    np.logical_and(
+        df_events["event"] == "ride_end",
+        df_events["battery_pct"] <= mu_battery_pct_used,
+    )
+]
+
+box = (
+    df_critical_batteries["longitude"].min(),
+    df_critical_batteries["longitude"].max(),
+    df_critical_batteries["latitude"].min(),
+    df_critical_batteries["latitude"].max(),
+)
+
+_, heatmap = plt.subplots(figsize=(16, 9))
+berlin_map = plt.imread(data_path_for_map)
+
+heatmap.hexbin(
+    x=df_critical_batteries["longitude"],
+    y=df_critical_batteries["latitude"],
+    zorder=1,
+    cmap="inferno",
+    alpha=0.25,
+)
+heatmap.set_xlim(box[0], box[1])
+heatmap.set_ylim(box[2], box[3])
+heatmap.imshow(berlin_map, extent=box, aspect="equal")
+
 
 # %% [markdown]
 # ## Churn Rates
