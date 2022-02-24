@@ -192,7 +192,7 @@ for event_type in ("reservation_creation", "ride_start", "reservation_cancelatio
 # %% [markdown]
 # Can we create value from this? Probably not, but at least we can understand our business a little bit better. The Usage seems to be steady around the the daily mean. The daily reservations fluctuate steadily at around alightly above 18000 reservations a day and doesnt seem to move much above 20000 or underneath 16000 reservations. The actual usage of our scooters seems to move about around 12500 rides a day, staying in a range of 10000 to 14000 per day and peaking at 16000 per day.
 #
-# Also, we may see a usage pattern in regards to the weekdays. I was already told about the dynamic prices project and the weekdays with their respective usage may seem like an obvious choice as part of a model.
+# Also, we may see a usage pattern in regards to the weekdays. I was already told about the dynamic prices project and the weekdays with their respective usage may seem like an obvious choice as part of a model. Daytime, location and fleet capacity at the respective location could also be model parameters. We could also incorporate some kind of recommender system to predict a destination or the battery usage from our user behaviour.
 
 # %%
 df_weekday_count_pivot_table = (
@@ -210,6 +210,93 @@ df_weekday_count_pivot_table = (
 )
 
 # %% [markdown]
+# In this figure we can see the distribution of rides per weekday from 0 = monday to 6 = sunday. It is very surprising to see significant less usage on mondays. I would also expect to see most usage in the morning (e.g. commuting to work) or the evening. Emmy's service as an alternative to cab services would also lead to an increased usage in the evening (dober usage hopefully). Let's get a feeling for the mean hourly usage and compare them among the weekdays.
+
+# %%
+df_hourly_usage_count_pivot_table = (
+    pd.pivot_table(
+        df_events[["event", "year", "month", "day", "hour", "weekday"]],
+        columns=["event"],
+        index=["year", "month", "day", "hour", "weekday"],
+        aggfunc=np.count_nonzero,
+    )
+    .groupby(["weekday", "hour"])
+    .mean()
+)
+df_hourly_usage_count_pivot_table.plot(
+    figsize=(16, 9),
+    title="Mean scooter rides per hour on weekdays",
+    xticks=range(0, 168, 6),
+    rot=90,
+    grid=True,
+)
+
+# %% [markdown]
+# Now this figure is telling a story! We can learly see an increased usage in the morning and evening. Clearly customers use our service to commute to and from work. We can also see an increase friday and saturday night. So this data shows a pattern and should be very useful for dynamic pricing systems. It should also be very useful for operations, so we can manage when we should dispatch most of the maintenance crew. I will plot log scaled figure to compare "ride_end" events with maintenance events to get a better picture
+#
+# ## Operations
+
+# %%
+df_hourly_usage_count_pivot_table = (
+    pd.pivot_table(
+        df_events[["event", "year", "month", "day", "hour", "weekday"]].where(
+            np.logical_or(
+                df_events["event"] == "maintenance_start",
+                df_events["event"] == "ride_end",
+            )
+        ),
+        columns=["event"],
+        index=["year", "month", "day", "hour", "weekday"],
+        aggfunc=np.count_nonzero,
+    )
+    .groupby(["weekday", "hour"])
+    .mean()
+)
+df_hourly_usage_count_pivot_table.plot(
+    figsize=(16, 9),
+    title="Maintenance response on usage spike",
+    xticks=range(0, 168, 6),
+    ylabel="log scaled number of events",
+    logy=True,
+    rot=90,
+    grid=True,
+)
+
+# %%
+df_ride_start_to_end_merge = pd.merge(
+    df_events[df_events["event"] == "ride_start"],
+    df_events[df_events["event"] == "ride_end"],
+    on=["ride_id", "ride_id"],
+)
+df_ride_start_to_end_merge["battery_pct_used"] = (
+    df_ride_start_to_end_merge["battery_pct_x"]
+    - df_ride_start_to_end_merge["battery_pct_y"]
+)
+
+
+# %% [markdown]
+# It looks like there are some cases, which seem to indicate, that some customers might charge their scooter.
+
+# %%
+df_ride_start_to_end_merge[df_ride_start_to_end_merge["battery_pct_used"] < 0]
+
+# %%
+mu_battery_pct_used = df_ride_start_to_end_merge["battery_pct_used"].mean()
+sigma_battery_pct_used = df_ride_start_to_end_merge["battery_pct_used"].var()
+
+plot_battery_delta = df_ride_start_to_end_merge["battery_pct_used"].plot.hist(
+    bins=100,
+    figsize=(16, 9),
+    title="Distribution of battery_pct used per ride",
+    xlabel="battery_pct used",
+)
+plot_battery_delta.text(
+    25,
+    30000,
+    f'mu = {round(mu_battery_pct_used, 2)}\nsigma = {round(np.sqrt(sigma_battery_pct_used), 2)}',
+)
+
+# %% [markdown]
 # ## Churn Rates
 # In an ideal world we want to catch our customers from the beginning of their journey until they are safe and sound at their friends and families, at work or wherever our costumers choose to go. So lets disect the churn rate of our costumer behaviour.
 
@@ -224,6 +311,7 @@ for event_type in ("reservation_creation", "ride_start", "reservation_cancelatio
         index=["year", "month", "day"],
         aggfunc=np.count_nonzero,
     )
+
 df_churn_count_pivot_table.plot.box(figsize=(16, 9), grid=True, title="")
 
 # %%
