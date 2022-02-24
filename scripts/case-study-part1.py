@@ -282,7 +282,8 @@ df_ride_start_to_end_merge[df_ride_start_to_end_merge["battery_pct_used"] < 0]
 
 # %%
 mu_battery_pct_used = df_ride_start_to_end_merge["battery_pct_used"].mean()
-sigma_battery_pct_used = df_ride_start_to_end_merge["battery_pct_used"].var()
+sigma_battery_pct_used = np.sqrt(df_ride_start_to_end_merge["battery_pct_used"].var())
+risk_battery_pct_used = df_ride_start_to_end_merge["battery_pct_used"].quantile(q=0.95)
 
 plot_battery_delta = df_ride_start_to_end_merge["battery_pct_used"].plot.hist(
     bins=100,
@@ -290,11 +291,20 @@ plot_battery_delta = df_ride_start_to_end_merge["battery_pct_used"].plot.hist(
     title="Distribution of battery_pct used per ride",
     xlabel="battery_pct used",
 )
-plot_battery_delta.text(
-    25,
-    30000,
-    f'mu = {round(mu_battery_pct_used, 2)}\nsigma = {round(np.sqrt(sigma_battery_pct_used), 2)}',
+
+plot_text = (
+    f'mu = {round(mu_battery_pct_used, 2)}\n'
+    f'sigma = {round(sigma_battery_pct_used, 2)}\n'
+    f'95th percentile = {round(risk_battery_pct_used, 2)}'
 )
+plot_battery_delta.text(25, 30000, plot_text)
+
+plot_battery_delta.axvline(x=mu_battery_pct_used, color="black", label="mu")
+plot_battery_delta.axvline(
+    x=risk_battery_pct_used, color="red", linestyle="--", label="95th percentile"
+)
+
+plot_battery_delta.legend()
 
 # %% [markdown]
 # ## Churn Rates
