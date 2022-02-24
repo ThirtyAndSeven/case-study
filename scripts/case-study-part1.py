@@ -181,12 +181,26 @@ for event_type in ("reservation_creation", "ride_start", "reservation_cancelatio
         index=["year", "month", "day"],
         aggfunc=np.count_nonzero,
     )
-    df_daily_mean_pivot_table = df_count_pivot_table[event_type].mean()
-    df_count_pivot_table.plot(
-        xlabel="number of events", kind="hist", bins=20, figsize=(16, 9), grid=True
+
+    mu_count_events = df_count_pivot_table[event_type].mean()
+    sigma_count_events = np.sqrt(df_count_pivot_table[event_type].var())
+    risk_count_events = df_churn_count_pivot_table[event_type].quantile(q=0.05)
+
+    plot_hist_count_events = df_count_pivot_table.plot.hist(
+        xlabel="number of events", bins=20, figsize=(16, 9), grid=True
     )
-    df_count_pivot_table["mean"] = df_daily_mean_pivot_table
-    df_count_pivot_table.plot(figsize=(16, 9), grid=True)
+    plot_hist_count_events.axvline(x=mu_count_events, color="black", label="mean")
+    plot_hist_count_events.axvline(
+        x=risk_count_events, color="red", linestyle="--", label="0.05 Percentile"
+    )
+    plot_hist_count_events.legend()
+
+    plot_line_count_events = df_count_pivot_table.plot(figsize=(16, 9), grid=True)
+    plot_line_count_events.axhline(y=mu_count_events, color="black", label="mean")
+    plot_line_count_events.axhline(
+        y=risk_count_events, color="red", linestyle="--", label="0.05 Percentile"
+    )
+    plot_line_count_events.legend()
 
 
 # %% [markdown]
@@ -294,6 +308,7 @@ plot_battery_delta = df_ride_start_to_end_merge["battery_pct_used"].plot.hist(
     figsize=(16, 9),
     title="Distribution of battery_pct used per ride",
     xlabel="battery_pct used",
+    grid=True,
 )
 
 plot_text = (
