@@ -81,7 +81,7 @@ for header in df_cars.columns.values:
 # It seems like there are no null values in the critical columns. If all of your actual data looks like this: kudos! We dont need to clean any data in that regard.
 # Next I want to check if there are any unexpacted or impossible values in any of the ids, geological data as well as battery percentages.
 #
-# ### Checking for rogue ids
+# ### Check for rogue ids
 
 # %%
 print(
@@ -91,6 +91,9 @@ print(
     f"Min and max vehicle_id in the events table: {df_events['vehicle_id'].min()}, {df_events['vehicle_id'].max()}"
 )
 
+
+# %% [markdown]
+# ## Check
 
 # %% [markdown]
 # ## Cast event times to datetimes
