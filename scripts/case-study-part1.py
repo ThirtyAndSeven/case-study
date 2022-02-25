@@ -364,12 +364,13 @@ heatmap.hexbin(
     y=df_critical_batteries["latitude"],
     zorder=1,
     cmap="inferno",
-    alpha=0.25,
+    alpha=0.3,
+    lw=0,
 )
 heatmap.set_xlim(box[0], box[1])
 heatmap.set_ylim(box[2], box[3])
 heatmap.imshow(berlin_map, extent=box, aspect="equal")
-
+f"The long/lat bounderies are: {box}"
 
 # %% [markdown]
 # ## Churn Rates
