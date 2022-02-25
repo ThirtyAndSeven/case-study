@@ -377,12 +377,10 @@ for event_type in ("reservation_creation", "ride_start", "reservation_cancelatio
         aggfunc=np.count_nonzero,
     )
 
-df_churn_count_pivot_table.plot.box(figsize=(16, 9), grid=True, title="")
+box_plot = df_churn_count_pivot_table.plot.box(figsize=(16, 9), grid=True, title="")
+box_plot.legend()
 
-# %%
-df_pivot = pd.pivot_table(
-    df_events,
-    values=["battery_pct", "driven_distance"],
-    index=["year", "month", "event"],
-    aggfunc=np.mean,
-)
+# %% [markdown]
+# We can expect as many cancelations in bad days as rides in bad days, but we can't really measure any performance out of that, but we can already see much more volatility in reservation than cancelations. This makes predictions much more easy. For the sake of simplicity we can just subtract our expected cancelations from our reservations to predict rides.
+#
+# Emmy also is not a B2B business. We can't really aim to reduce any cancelations, except for increasing customer convenience. Still, life is chaotic and maybe our customers don't their ride and just decided to visit their friends next to the office.
