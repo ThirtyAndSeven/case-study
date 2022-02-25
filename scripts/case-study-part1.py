@@ -327,21 +327,10 @@ plot_battery_delta.axvline(
 
 plot_battery_delta.legend()
 
-
 # %% [markdown]
 # Using this figure I can create a guideline system. I should probably also consider the vehicle type, but for now I will generalize a system with both vehicle types in mind. Assuming our custors won't charge their rented vehicle during their trip, we can assign a warning state for every vehicle using the mean battery usage and the 95th percentile of our data.
 
 # %%
-def apply_color(val: float, warning_limit: float, critical_limit: float) -> str:
-    if val <= warning_limit:
-        color = "yellow"
-    elif val <= critical_limit:
-        color = "red"
-    else:
-        color = "black"
-    return
-
-
 df_critical_batteries = df_events[
     np.logical_and(
         df_events["event"] == "ride_end",
@@ -364,7 +353,7 @@ heatmap.hexbin(
     y=df_critical_batteries["latitude"],
     zorder=1,
     cmap="inferno",
-    alpha=0.3,
+    alpha=0.5,
     lw=0,
 )
 heatmap.set_xlim(box[0], box[1])
