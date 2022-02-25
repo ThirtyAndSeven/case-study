@@ -390,7 +390,6 @@ box_plot = df_churn_count_pivot_table.plot.box(
     grid=True,
     title="Distribution of reservations, rides and cancelations",
 )
-box_plot.legend()
 
 # %% [markdown]
 # We can expect as many cancelations in bad days as rides in bad days, but we can't really measure any performance out of that, but we can already see much more volatility in reservation than cancelations. This makes predictions much more easy. For the sake of simplicity we can just subtract our expected cancelations from our reservations to predict rides.
