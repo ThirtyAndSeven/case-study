@@ -172,6 +172,8 @@ df_events["driven_distance"] = df_events["comment"].apply(
 # %% [markdown]
 # ## Basic KPIs
 # At first I want to get a measurement in performance behaviour and its distribution. Also, I want to know if we can beat a trailing average, but my data only spans over two months. Because of the seasonal nature of Emmy's business, I would consider comparing the usage performance from past years. In this case I just measured the mean from my available data.
+#
+# Later on I want to measure more atomic usage and gain some insights in maintenance performance, as well as a quick glance at usage churn.
 
 # %%
 for event_type in ("reservation_creation", "ride_start", "reservation_cancelation"):
@@ -282,6 +284,9 @@ df_hourly_usage_count_pivot_table.plot(
     grid=True,
 )
 
+# %% [markdown]
+# I cannot see any significant timelag between service usage and maintenance. Sadly, I don't now all the criteria for maintening the fleet, but it seems like maintenance is swift. Given all criteria I could check the maintenance response time for more atomic performance measurements. All in all this figures seems to be a success story!
+
 # %%
 df_ride_start_to_end_merge = pd.merge(
     df_events[df_events["event"] == "ride_start"],
@@ -362,6 +367,9 @@ heatmap.imshow(berlin_map, extent=box, aspect="equal")
 f"The long/lat bounderies are: {box}"
 
 # %% [markdown]
+# This heatmap is thankfully very homogenous, but we can see some spots, which are clearly lacking. I assume I don't have the whole fleet in my data, but for a complete risk assessment we should look further in service availability, especially in critical areas.
+
+# %% [markdown]
 # ## Churn Rates
 # In an ideal world we want to catch our customers from the beginning of their journey until they are safe and sound at their friends and families, at work or wherever our costumers choose to go. So lets disect the churn rate of our costumer behaviour.
 
@@ -377,7 +385,11 @@ for event_type in ("reservation_creation", "ride_start", "reservation_cancelatio
         aggfunc=np.count_nonzero,
     )
 
-box_plot = df_churn_count_pivot_table.plot.box(figsize=(16, 9), grid=True, title="")
+box_plot = df_churn_count_pivot_table.plot.box(
+    figsize=(16, 9),
+    grid=True,
+    title="Distribution of reservations, rides and cancelations",
+)
 box_plot.legend()
 
 # %% [markdown]
