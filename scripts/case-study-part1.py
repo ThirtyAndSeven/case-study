@@ -93,7 +93,10 @@ print(
 
 
 # %% [markdown]
-# ## Check
+# ## Check for duplicates
+
+# %%
+df_events.drop_duplicates()
 
 # %% [markdown]
 # ## Cast event times to datetimes
@@ -398,3 +401,6 @@ box_plot = df_churn_count_pivot_table.plot.box(
 # We can expect as many cancelations in bad days as rides in bad days, but we can't really measure any performance out of that, but we can already see much more volatility in reservation than cancelations. This makes predictions much more easy. For the sake of simplicity we can just subtract our expected cancelations from our reservations to predict rides.
 #
 # Emmy also is not a B2B business. We can't really aim to reduce any cancelations, except for increasing customer convenience. Still, life is chaotic and maybe our customers don't their ride and just decided to visit their friends next to the office.
+
+# %% [markdown]
+# I hope I could grant you some helpful insights in respect to my workflow and skills and I wish you all the very best!
